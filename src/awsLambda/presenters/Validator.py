@@ -36,7 +36,7 @@ class Validator(object):
         """
         envVar = EnvVar()
         self.env = envVar['ENV']
-        
+
         try:
             origin = Validator.getOrigin(event)
             domain = self.getDomain(origin)
@@ -58,12 +58,12 @@ class Validator(object):
         """
         caseInsensitiveEvent = dict((key.lower(), event[key]) for key in event)
         headers = caseInsensitiveEvent['headers']
-        
+
         caseInsensitiveHeaders = dict((key.lower(), headers[key]) for key in headers)
         origin = caseInsensitiveHeaders['origin'].lower()
 
         return origin
-    
+
     def getDomain(self, origin: str) -> str:
         """Gets the domain from the origin.
 
@@ -74,7 +74,7 @@ class Validator(object):
             ValidationException: either no origin provided in request, 
                                  the request does not come from the current environment, 
                                  or the request does not come from an allowed domain
-        
+
         Returns:
             str: the domain from the origin
         """
@@ -108,7 +108,7 @@ class Validator(object):
         """
         if not (origin == 'https://' + SUBDOMAIN + '.' + domain):
             raise ValidationException(f'Request does not come from an allowed origin: {origin}')
-    
+
     def sendCorsResponse(self, origin: str, statusCode: int, response: dict) -> dict:
         """Sends a response with CORS headers.
 

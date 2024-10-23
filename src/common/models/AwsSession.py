@@ -32,7 +32,11 @@ class AwsSession:
     
     @classmethod
     def _initSession(cls) -> boto3.Session:
-        """Initializes an AWS session."""
+        """Initializes an AWS session.
+        
+        Returns:
+            boto3.Session: the AWS session
+        """
         session = boto3.Session(region_name=cls.AWS_REGION)
         return session
     

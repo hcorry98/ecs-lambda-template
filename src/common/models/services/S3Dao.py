@@ -13,8 +13,8 @@ class S3Dao:
         session = awsSession.getSession()
         self.client = session.client(service_name='s3')
 
-    def moveFile(self, oldBucket: str, oldKey: str, 
-                destBucket: str, destKey: str) -> tuple[dict, dict]:
+    def moveFile(self, oldBucket: str, oldKey: str,
+                 destBucket: str, destKey: str) -> tuple[dict, dict]:
         """Moves file between S3 buckets.
 
         If the move is to the same bucket, then this is essentially a 

@@ -88,8 +88,12 @@ class TestEcsS3ServiceUnit(unittest.TestCase):
             self.ecsS3Service.writeOutputFile(data, fileName)
 
         # Assert
-        self.mockEcsS3DaoInstance.writeFile.assert_has_calls([call(self.ecsS3Service.dataBucketName, outputKey, outData),
-                                        call(self.ecsS3Service.nextAppDataBucketName, nextProcessKey, outData)])
+        self.mockEcsS3DaoInstance.writeFile.assert_has_calls(
+            [
+                call(self.ecsS3Service.dataBucketName, outputKey, outData),
+                call(self.ecsS3Service.nextAppDataBucketName, nextProcessKey, outData)
+            ]
+        )
 
     def test_writeOutputFile_EmptyData(self):
         """Tests if writeOutputFile runs without error if empty data is passed in."""
@@ -105,8 +109,12 @@ class TestEcsS3ServiceUnit(unittest.TestCase):
             self.ecsS3Service.writeOutputFile(data, fileName)
 
         # Assert
-        self.mockEcsS3DaoInstance.writeFile.assert_has_calls([call(self.ecsS3Service.dataBucketName, outputKey, outData),
-                                        call(self.ecsS3Service.nextAppDataBucketName, nextProcessKey, outData)])
+        self.mockEcsS3DaoInstance.writeFile.assert_has_calls(
+            [
+                call(self.ecsS3Service.dataBucketName, outputKey, outData),
+                call(self.ecsS3Service.nextAppDataBucketName, nextProcessKey, outData)
+            ]
+        )
 
     def test_writeOutputFile_EmptyFileName(self):
         """Tests if writeOutputFile runs without error if empty file name is passed in."""
@@ -122,5 +130,9 @@ class TestEcsS3ServiceUnit(unittest.TestCase):
             self.ecsS3Service.writeOutputFile(data, fileName)
 
         # Assert
-        self.mockEcsS3DaoInstance.writeFile.assert_has_calls([call(self.ecsS3Service.dataBucketName, outputKey, outData),
-                                        call(self.ecsS3Service.nextAppDataBucketName, nextProcessKey, outData)])
+        self.mockEcsS3DaoInstance.writeFile.assert_has_calls(
+            [
+                call(self.ecsS3Service.dataBucketName, outputKey, outData),
+                call(self.ecsS3Service.nextAppDataBucketName, nextProcessKey, outData)
+            ]
+        )

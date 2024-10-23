@@ -1,1 +1,39 @@
-.DS_Store
+# ---SRC---
+# Byte-compiled / optimized / DLL files
+**/__pycache__/
+src/*.py[cod]
+src/*$py.class
+
+# Distribution / packaging
+src/.Python
+src/.cache
+
+# Installer logs
+src/pip-log.txt
+src/pip-delete-this-directory.txt
+
+# Environments
+.venv
+src/env/
+src/venv/
+src/ENV/
+src/env.bak/
+src/venv.bak/
+
+# ---TERRAFORM---
+# Local .terraform directories
+**/.terraform/*
+**/.terraform.*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# ---MISC---
+**/.vs
+**/.vscode
+**/.DS_Store
+/*/.env.local
+/*/.env.development.local
+/*/.env.test.local
+/*/.env.production.local

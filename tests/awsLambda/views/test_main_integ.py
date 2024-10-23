@@ -18,7 +18,7 @@ class TestLambdaIntegration(unittest.TestCase):
 
     TEST_FILE_LOC = 'tests/common/testData/'
     TEST_FILE_NAME = 'CompletedHints.csv'
-    TEST_ENV = 'stg'
+    TEST_ENV = EnvVar()['ENV']
     DATA_BUCKET_NAME = f'{APP_NAME}-data-{TEST_ENV}'
 
     def setUp(self):
@@ -41,6 +41,10 @@ class TestLambdaIntegration(unittest.TestCase):
 
         self.patcher = patch('boto3.client', mockClient)
         self.patcher.start()
+
+        patcher = patch('awsLambda.presenters.EcsPresenter.BugReporter')
+        self.addCleanup(patcher.stop)
+        self.mockBugReporter = patcher.start()
 
         origin = f'https://{SUBDOMAIN}.{"rll" if self.TEST_ENV == "prd" else "rll-dev"}.byu.edu'
         self.mockEvent = {

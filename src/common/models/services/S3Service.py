@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from botocore.exceptions import ClientError
 
 from common.models.EnvVar import EnvVar

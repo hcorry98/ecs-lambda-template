@@ -7,6 +7,11 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
+# Install git
+RUN apt-get update \
+&& apt install -y git \
+&& apt-get clean 
+
 # Copy local code to the container image
 WORKDIR /src
 COPY ./src/awsLambda awsLambda

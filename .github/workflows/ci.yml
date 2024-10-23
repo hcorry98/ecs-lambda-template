@@ -1,0 +1,214 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [prd, stg, dev]
+    types: [opened, reopened, synchronize, edited]
+    paths-ignore: # Pushes that include only these changed files won't trigger actions
+      - "**/README.md"
+      - "**/.gitignore"
+      - "**/doc/*"
+env:
+  tf_version: ">=1.4.5" # Must match value in terraform/{env}/main.tf
+
+jobs:
+  env:
+    name: Set Env Vars
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Current Timestamp
+        id: date
+        run: echo "timestamp=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_OUTPUT
+
+      - name: Set up PRD Environment Variables
+        if: ${{ github.base_ref == 'prd' }}
+        # Replace the app_name with the project name
+        run: |
+          matrix='{
+            "env":[
+              {
+                "app_name":"app-name",
+                "tf_working_dir":"./terraform/prd",
+                "aws_account":"646364352403",
+                "aws_gha_role":"byuawsfhtl-prd-gha",
+                "image_tag":"${{ steps.date.outputs.timestamp }}",
+                "env":"prd",
+                "infile":"InProgress/CompletedHints.csv",
+                "private_subnet_a_id":"subnet-06c5aab932000dfe6",
+                "private_subnet_b_id":"subnet-08bc690290754a5e8",
+                "vpc_id":"vpc-0d155f9604f8734b8"
+              }
+            ]
+          }'
+          echo matrix=`echo $matrix | jq -c .` >> $GITHUB_ENV
+
+      - name: Set up STG Environment Variables
+        if: ${{ github.base_ref == 'stg' || github.base_ref == 'dev' }}
+        # Replace the app_name with the project name
+        run: |
+          matrix='{
+            "env":[
+              {
+                "app_name":"app-name",
+                "tf_working_dir":"./terraform/stg",
+                "aws_account":"222021474030",
+                "aws_gha_role":"byuawsfhtl-stg-gha",
+                "image_tag":"${{ steps.date.outputs.timestamp }}",
+                "env":"stg",
+                "infile":"InProgress/CompletedHints.csv",
+                "private_subnet_a_id":"subnet-04ea1b1ec5d896375",
+                "private_subnet_b_id":"subnet-0a9cdc5582a7a6e20",
+                "vpc_id":"vpc-057175f829f9e74b2"
+              }
+            ]
+          }'
+          echo matrix=`echo $matrix | jq -c .` >> $GITHUB_ENV
+
+    outputs:
+      matrix: ${{ env.matrix }}
+
+  format:
+    name: Terraform Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            terraform
+
+      - name: Check Terraform Formatting
+        working-directory: "./terraform"
+        run: terraform fmt -check -recursive
+
+  checkMeds:
+    name: Check Meds (merge every day)
+    runs-on: ubuntu-latest
+    steps:
+        - name: Check Meds
+          uses: byuawsfhtl/MedsAction@v1.0.0
+
+  standardCheck:
+    name: Python Standard Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Follow Python Standard
+        uses: byuawsfhtl/PythonStandardAction@v1.1.1
+    
+  auto-test:
+    name: Run Automated Tests
+    runs-on: ubuntu-latest
+    needs: [env]
+    strategy:
+      matrix: ${{ fromJson(needs.env.outputs.matrix) }}
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            src
+            tests
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: "arn:aws:iam::${{ matrix.env.aws_account }}:role/${{ matrix.env.aws_gha_role }}"
+          role-session-name: ${{ github.sha }}
+          aws-region: us-west-2
+
+      - name: Setup env
+        run: |
+          rm ./src/common/.env
+          touch ./src/common/.env
+          echo ENV=${{ matrix.env.env }} >> ./src/common/.env
+          echo INFILE=${{ matrix.env.infile }} >> ./src/common/.env
+          echo PRIVATE_SUBNET_A_ID=${{ matrix.env.private_subnet_a_id }} >> ./src/common/.env
+          echo PRIVATE_SUBNET_B_ID=${{ matrix.env.private_subnet_b_id }} >> ./src/common/.env
+          echo VPC_ID=${{ matrix.env.vpc_id }} >> ./src/common/.env
+          cat ./src/common/.env
+      
+      - name: Install Project Dependencies
+        working-directory: ./src
+        run: |
+          pip install -r ./common/requirements.txt
+          pip install -r ./awsEcs/requirements.txt
+          pip install -r ./awsLambda/requirements.txt
+        
+      - name: Run Automated Tests
+        run: |
+          python tests/main.py
+
+  docker-ecs:
+    name: Docker Build for ECS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            src
+            docker
+
+      - name: Build the Docker image
+        run: |
+          docker build . --file docker/ecs.dockerfile
+
+  docker-lambda:
+    name: Docker Build for Lambda
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            src
+            docker
+
+      - name: Build the Docker image
+        run: |
+          docker build . --file docker/lambda.dockerfile
+
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: [env, format]
+    strategy:
+      matrix: ${{ fromJson(needs.env.outputs.matrix) }}
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            terraform
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: "arn:aws:iam::${{ matrix.env.aws_account }}:role/${{ matrix.env.aws_gha_role }}"
+          role-session-name: ${{ github.sha }}
+          aws-region: us-west-2
+
+      - name: Terraform Setup
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.tf_version }}
+
+      - name: Terraform Init
+        working-directory: "${{ matrix.env.tf_working_dir }}"
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: "${{ matrix.env.tf_working_dir }}"
+        run: terraform plan -var 'image_tag=${{ matrix.env.image_tag }}' -input=false -out=plan
+
+      - name: Comment Terraform Plan
+        uses: byu-oit/github-action-tf-plan-comment@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: "${{ matrix.env.tf_working_dir }}"
+          terraform-plan-file: plan

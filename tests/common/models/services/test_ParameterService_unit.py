@@ -7,7 +7,7 @@ class TestParameterServiceUnit(unittest.TestCase):
     """Unit tests for S3Dao."""
 
     def setUp(self):
-        """Set up the S3Dao instance for testing."""
+        """Sets up the test case."""
         patcher = patch('common.models.services.ParameterService.AwsSession')
         self.addCleanup(patcher.stop)
         mockAwsSession = patcher.start()

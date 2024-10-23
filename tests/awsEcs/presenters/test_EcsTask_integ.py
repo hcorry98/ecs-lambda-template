@@ -21,7 +21,7 @@ class TestEcsTaskIntegration(TestCase):
     TEST_FILE_LOC = 'tests/common/testData/'
     TEST_FILE_NAME = 'CompletedHints.csv'
     INVALID_FILE_NAME = 'Invalid.txt'
-    TEST_ENV = 'stg'
+    TEST_ENV = EnvVar()['ENV']
     DATA_BUCKET_NAME = f'{APP_NAME}-data-{TEST_ENV}'
     NEXT_DATA_BUCKET_NAME = f'{NEXT_APP_NAME}-data-{TEST_ENV}'
 
@@ -72,7 +72,7 @@ class TestEcsTaskIntegration(TestCase):
         self._uploadTestFile()
 
         with redirect_stdout(None):
-            ecsTask = EcsTask()
+            ecsTask = EcsTask(test=True)
             ecsTask.run()
             
         self.testFileKey = f'Done/{self.TEST_FILE_NAME}'
@@ -103,7 +103,7 @@ class TestEcsTaskIntegration(TestCase):
         del os.environ['ENV']
         with redirect_stdout(None):
             with self.assertRaises((KeyError, ImproperlyConfigured)):
-                EcsTask()
+                EcsTask(test=True)
         
         osEnv = {
             'INFILE': self.testFileKey,
@@ -117,7 +117,7 @@ class TestEcsTaskIntegration(TestCase):
         """Tests if EcsTask raises a NoSuchBucket error when run with an invalid environment."""
         os.environ['ENV'] = 'invalid'
         with redirect_stdout(None):
-            ecsTask = EcsTask()
+            ecsTask = EcsTask(test=True)
             with self.assertRaises(Exception) as e:
                 ecsTask.run()
 
@@ -134,7 +134,7 @@ class TestEcsTaskIntegration(TestCase):
 
         os.environ['INFILE'] = 'no-such-file'
         with redirect_stdout(None):
-            ecsTask = EcsTask()
+            ecsTask = EcsTask(test=True)
             with self.assertRaises(ClientError) as e:
                 ecsTask.run()
 
@@ -153,7 +153,7 @@ class TestEcsTaskIntegration(TestCase):
         del os.environ['INFILE']
         with redirect_stdout(None):
             with self.assertRaises((KeyError, ImproperlyConfigured)):
-                EcsTask()
+                EcsTask(test=True)
 
         osEnv = {
             'INFILE': self.testFileKey,
@@ -173,7 +173,7 @@ class TestEcsTaskIntegration(TestCase):
 
         # Act
         with redirect_stdout(None):
-            ecsTask = EcsTask()
+            ecsTask = EcsTask(test=True)
             ecsTask.nextAppFacade = mockNextAppFacade
             ecsTask.run()
 

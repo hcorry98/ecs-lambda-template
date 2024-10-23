@@ -1,1 +1,2 @@
 awslambdaric~=2.0.4
+PyBugReporter @ git+https://github.com/byuawsfhtl/PyBugReporter@prd#egg=PyBugReporter

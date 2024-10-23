@@ -11,6 +11,11 @@ resource "aws_ecr_repository" "ecr_repo" {
   }
 }
 
+module "acs" {
+  source            = "github.com/byu-oit/terraform-aws-acs-info?ref=v4.0.0"
+  vpc_vpn_to_campus = false
+}
+
 module "ecs_lambda" {
   source = "github.com/byuawsfhtl/terraform-ecs-lambda?ref=prd"
 
@@ -28,7 +33,12 @@ module "ecs_lambda" {
   ecs_cpu    = 256 # Optional - Default is 256
   ecs_memory = 512 # Optional - Default is 512
 
-  lambda_environment_variables = { "ENV" = var.env } # Optional
+  lambda_environment_variables = { # Optional
+    "ENV"                 = var.env,
+    "VPC_ID"              = module.acs.vpc.id,
+    "PRIVATE_SUBNET_A_ID" = module.acs.private_subnet_ids[0],
+    "PRIVATE_SUBNET_B_ID" = module.acs.private_subnet_ids[1]
+  }
   lambda_endpoint_definitions = [
     {
       path_part       = "run"

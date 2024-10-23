@@ -1,9 +1,13 @@
 import json
+import sys
 import traceback
 
 import boto3
 from botocore.exceptions import ClientError
+from PyBugReporter.src.BugReporter import BugReporter
 
+from common.models.EnvVar import EnvVar
+from common.models.services.ParameterService import ParameterService
 from common.models.services.S3Service import S3Service
 from common.Names import PROJECT_NAME
 
@@ -20,16 +24,13 @@ class EcsPresenter:
         s3 (S3Service): the S3 service object
         event (dict): the event from the API Gateway request to Lambda
     """
-
-    PRIVATE_SUBNET_A_ID = 'subnet-04ea1b1ec5d896375'
-    PRIVATE_SUBNET_B_ID = 'subnet-0a9cdc5582a7a6e20'
-    VPC_ID = 'vpc-057175f829f9e74b2'
      
-    def __init__(self, event: dict) -> None:
+    def __init__(self, event: dict, test: bool = False) -> None:
         """Constructs an EcsPresenter object.
 
         Args:
             event (dict): the event from the API Gateway request to Lambda
+            test (bool, optional): whether the task is being tested; defaults to False
         """
 
         self.ecsClient = boto3.client('ecs', region_name='us-west-2')
@@ -38,8 +39,15 @@ class EcsPresenter:
         self.securityGroupName = f'{PROJECT_NAME}-fargate-sg'
 
         self.s3 = S3Service()
-        
         self.event = event
+
+        envVar = EnvVar()
+        self.PRIVATE_SUBNET_A_ID = envVar['PRIVATE_SUBNET_A_ID']
+        self.PRIVATE_SUBNET_B_ID = envVar['PRIVATE_SUBNET_B_ID']
+        self.VPC_ID = envVar['VPC_ID']
+
+        parameterService = ParameterService()
+        BugReporter.setVars(parameterService.getGithubCredentials(), PROJECT_NAME, 'byuawsfhtl', test)
 
     def _getTaskDefinitionArn(self) -> str:
         """Retrieves the task definition ARN with the latest revision number.
@@ -97,6 +105,25 @@ class EcsPresenter:
             }
         }
         return vpcConfig
+    
+    def _reportBug(self, e: Exception) -> None:
+        """Reports a bug to the BugReporter.
+
+        Args:
+            e (Exception): the exception to report
+        """
+        excType = type(e).__name__
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        functionName = tb[-1][2]
+
+        # title for bug report
+        title = f"{PROJECT_NAME} had a {excType} error with the {functionName} function"
+
+        # description for bug report
+        description = f'Type: {excType}\nError text: {e}\nFunction Name: {functionName}\n\n{traceback.format_exc()}'
+        description += f'\nEnvironment: {EnvVar()["ENV"]}'
+
+        BugReporter.manualBugReport(title, description)
 
     def run(self) -> tuple[int, dict]:
         """Runs the task with the given key as an environment variable.
@@ -138,18 +165,22 @@ class EcsPresenter:
             print(traceback.format_exc())
             statusCode = 400
             response = {'error': 'No infile key provided in request body.'}
+            self._reportBug(e)
         except FileNotFoundError as e:
             print(traceback.format_exc())
             statusCode = 404
             response = {'error': f'No file found for given infile key: {self.key}'}
+            self._reportBug(e)
         except ClientError as e:
             print(traceback.format_exc())
             statusCode = 500
             response = {'error': 'Internal Server Error'}
-        except:
+            self._reportBug(e)
+        except Exception as e:
             print(traceback.format_exc())
             statusCode = 500
             response = {'error': 'Internal Server Error'}
+            self._reportBug(e)
         else:
             statusCode = 200
             response = {'message': f'Successfully started a task with the key: {newKey}'}

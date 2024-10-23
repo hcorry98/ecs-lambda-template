@@ -9,11 +9,7 @@ class RunEcsTask(Handle):
     """
 
     def __init__(self, *args) -> None:
-        """Initializes the RunEcsTask through the Handle's constructor.
-        
-        Args:
-            *args: the arguments to be passed to the Handle's constructor
-        """
+        """Initializes the RunEcsTask through the Handle's constructor."""
         super(RunEcsTask, self).__init__(*args)
 
     def _run(self) -> tuple[int, dict]:
@@ -27,5 +23,5 @@ class RunEcsTask(Handle):
                 int: the status code
                 dict: response from running the Handle
         """
-        ecsPresenter = EcsPresenter(self.event)
+        ecsPresenter = EcsPresenter(self.event, self.test)
         return ecsPresenter.run()

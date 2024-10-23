@@ -16,22 +16,21 @@ class Handle:
         event (dict): the event dictionary from the lambda function
         validator (Validator): the validator object that will be used to validate the event
     """
-    
-    def __init__(self, event: dict, validator: Validator) -> None:
+
+    def __init__(self, event: dict, validator: Validator, test: bool = False) -> None:
         """Initializes the Handle.
 
         Args:
             event (dict): the event dictionary from the lambda function
             validator (Validator): the validator object that will be used to validate the event
+            test (bool, optional): whether the Handle is being used for testing; defaults to False
         """
         self.event = event
         self.validator = validator
+        self.test = test
 
     def handle(self, *args) -> dict:
         """Handles the validation and response of the event.
-
-        Args:
-            *args: the arguments to be passed to the _run method
 
         Returns:
             dict: the HTTP response
@@ -54,9 +53,6 @@ class Handle:
         """The function to be overridden by the subclass.
         
         This function is responsible for calling the presenter of the endpoint.
-
-        Args:
-            *args: the arguments to be passed to the presenter
 
         Raises:
             NotImplementedError: the subclass must implement this method

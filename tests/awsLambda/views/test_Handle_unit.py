@@ -13,7 +13,7 @@ class TestHandleUnit(unittest.TestCase):
 
     @patch('awsLambda.presenters.Validator.Validator.validate')
     def setUp(self, mockValidate):
-        """Set up the Handle instance for testing."""
+        """Sets up the test case."""
         mockValidate.return_value = (200, {'message': 'Request comes from a valid source.'})
         validator = Validator()
         mockEvent = {
@@ -21,7 +21,7 @@ class TestHandleUnit(unittest.TestCase):
             'headers': {'origin': f'https://{SUBDOMAIN}.rll.byu.edu'},
             'body': ''
         }
-        self.handle = Handle(mockEvent, validator)
+        self.handle = Handle(mockEvent, validator, True)
 
         self.expectedResponse = {
             'statusCode': 200,
@@ -36,7 +36,7 @@ class TestHandleUnit(unittest.TestCase):
         os.environ.update(osEnv)
 
     def tearDown(self):
-        """Remove the test environment variable after each test."""
+        """Tears down the test case."""
         del os.environ['ENV']
 
     @patch('awsLambda.views.Handle.Handle._run')

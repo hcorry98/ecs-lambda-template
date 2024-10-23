@@ -32,8 +32,11 @@ class NextAppFacade:
         Args:
             infile (str): key of input file in next app's S3 bucket
         """
-        res = requests.post(self.NEXT_GS_RUN_ENDPOINT, json={ 'inputFile': infile },
-                            headers={ 'origin': self.ORIGIN })
+        res = requests.post(
+            self.NEXT_GS_RUN_ENDPOINT,
+            json={'inputFile': infile},
+            headers={'origin': self.ORIGIN}
+        )
         if res.status_code != 200:
             print('\nError running next app:')
             print(f'Status code: {res.status_code}')

@@ -11,7 +11,7 @@ class TestValidatorUnit(unittest.TestCase):
     """Unit tests the Lambda Validator presenter class."""
 
     def setUp(self):
-        """Set up the Validator instance for testing."""
+        """Sets up the test case."""
         self.validator = Validator()
         self.STG_DOMAIN = 'rll-dev.byu.edu'
 
@@ -24,7 +24,7 @@ class TestValidatorUnit(unittest.TestCase):
         os.environ.update(osEnv)
 
     def tearDown(self):
-        """Delete the environment variable after each test."""
+        """Tears down the test case."""
         del os.environ['ENV']
 
     # validate Tests

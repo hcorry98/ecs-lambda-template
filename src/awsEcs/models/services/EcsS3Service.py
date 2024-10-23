@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from io import StringIO
 
 from awsEcs.models.services.EcsS3Dao import EcsS3Dao

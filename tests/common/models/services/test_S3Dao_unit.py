@@ -7,14 +7,14 @@ class TestS3DaoUnit(unittest.TestCase):
     """Unit tests for S3Dao."""
 
     def setUp(self):
-        """Set up the S3Dao instance for testing."""
+        """Sets up the test case."""
         patcher = patch('common.models.services.S3Dao.AwsSession')
         self.addCleanup(patcher.stop)
         mockAwsSession = patcher.start()
 
         mockAwsSessionInstance = Mock()  # S3Dao receives instance when calling AwsSession()
         mockAwsSession.return_value = mockAwsSessionInstance
-        
+
         self.mockClient = Mock()
         config = {
             'getSession.return_value.client.return_value': self.mockClient
@@ -47,5 +47,5 @@ class TestS3DaoUnit(unittest.TestCase):
             }
         )
         self.mockClient.delete_object.assert_called_once_with(Bucket=oldBucket, Key=oldKey)
-        
+
     # moveFile has no failure states that aren't also AWS failure states

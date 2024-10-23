@@ -2,7 +2,7 @@ import unittest
 import glob
 import os
 
-def testSuiteFromRecursiveDiscover(folder: str, pattern: str) -> unittest.TestSuite:
+def test_suite_from_recursive_discover(folder: str, pattern: str) -> unittest.TestSuite:
     """Provides test suite object containing tests found in the given folder that begin with the given pattern.
 
     Args:
@@ -12,7 +12,10 @@ def testSuiteFromRecursiveDiscover(folder: str, pattern: str) -> unittest.TestSu
     Returns:
         TestSuite: a unittest object representing an aggregation of test cases
     """
-    testFiles = glob.glob(f'{folder}/**/{pattern}', recursive=True)
+    currentDir = os.path.dirname(os.path.realpath(__file__))
+    root = os.path.dirname(currentDir)
+
+    testFiles = glob.glob(f'{root}/{folder}/**/{pattern}', recursive=True)
     testDirs = list(set(([os.path.dirname(os.path.abspath(testFile)) for testFile in testFiles])))
 
     suites = [unittest.TestLoader().discover(start_dir=d, pattern=pattern) for d in testDirs]
